@@ -84,7 +84,7 @@ app.post("/merge", (req, res) => {
           const shorterDuration = Math.min(
             audioend - audiostart,
             videoend - videostart,
-            1000*60*10
+            60 * 10
           );
 
           // Trim longer file to match shorter duration and adapt to Instagram Reels specs
