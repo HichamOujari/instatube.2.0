@@ -106,7 +106,6 @@ app.post("/merge", (req, res) => {
                 console.log("Video sent successfully.");
                 // Delete the output file after sending
                 fs.removeSync(id);
-                //fs.unlinkSync(outputFilePath);
               }
             });
           });
@@ -115,6 +114,7 @@ app.post("/merge", (req, res) => {
     })
     .catch((error) => {
       console.error("Error downloading streams:", error);
+      fs.removeSync(id);
       res
         .status(500)
         .json({ error: "An error occurred while processing the request." });
