@@ -1,6 +1,7 @@
 const express = require("express");
 const ytdl = require("ytdl-core");
 const fs = require("fs");
+const uuid = require("uuid");
 const localtunnel = require("localtunnel");
 const { exec } = require("child_process");
 
@@ -23,9 +24,10 @@ app.post("/merge", (req, res) => {
       .json({ error: "Both audioUrl and videoUrl are required." });
   }
 
-  const tempAudioFile = "temp_audio.mp3";
-  const tempVideoFile = "temp_video.mp4";
-  const outputFilePath = "output.mp4";
+  const id = uuid.v4();
+  const tempAudioFile = `${id}/temp_audio.mp3`;
+  const tempVideoFile = `${id}/temp_video.mp4`;
+  const outputFilePath = `${id}/output.mp4`;
 
   // Download audio
   const audioStream = ytdl(audioUrl, { filter: "audioonly" });
@@ -119,5 +121,5 @@ const port = process.env.prod ?? 5501;
 
 app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
-  //localtunnel({ port: parseInt(port), subdomain: "instatube-generator" });
+  localtunnel({ port: parseInt(port), subdomain: "instatube-generator" });
 });

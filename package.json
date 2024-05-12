@@ -15,6 +15,7 @@
     "ffmpeg-static": "^5.2.0",
     "fluent-ffmpeg": "^2.1.2",
     "localtunnel": "^2.0.2",
+    "uuid": "^9.0.1",
     "ytdl-core": "^4.11.5"
   }
 }
