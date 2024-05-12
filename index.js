@@ -9,7 +9,7 @@ const app = express();
 app.use(express.json());
 
 app.post("/merge", (req, res) => {
-  const { audioUrl, videoUrl } = req.body;
+  const { audioUrl, videoUrl, isShort } = req.body;
 
   if (!audioUrl || !videoUrl) {
     return res
@@ -65,7 +65,9 @@ app.post("/merge", (req, res) => {
           const reelsDuration = Math.min(shorterDuration, 60);
 
           // Trim longer file to match shorter duration and adapt to Instagram Reels specs
-          const ffmpegCommand = `ffmpeg -i ${tempAudioFile} -i ${tempVideoFile} -t ${reelsDuration} -vf "scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:-1:-1,setsar=1" -c:v libx264 -b:v 1M -c:a aac -strict experimental ${outputFilePath} -preset veryfast`;
+          const ffmpegCommand = `ffmpeg -i ${tempAudioFile} -i ${tempVideoFile} -t ${
+            isShort ? reelsDuration : shorterDuration
+          } -vf "scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:-1:-1,setsar=1" -c:v libx264 -b:v 1M -c:a aac -strict experimental ${outputFilePath} -preset veryfast`;
 
           // Merge audio and video using ffmpeg
           exec(ffmpegCommand, (error, stdout, stderr) => {
