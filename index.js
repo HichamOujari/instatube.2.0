@@ -61,7 +61,7 @@ app.post("/merge", async (req, res) => {
       (error) => {
         if (error) {
           console.error(`FFmpeg error: ${error.message}`);
-          res
+          return res
             .status(500)
             .json({ error: "An error occurred while processing the request." });
         }
