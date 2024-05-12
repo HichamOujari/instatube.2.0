@@ -1,6 +1,6 @@
 const express = require("express");
 const ytdl = require("ytdl-core");
-const fs = require("fs");
+const fs = require("fs-extra");
 const uuid = require("uuid");
 const localtunnel = require("localtunnel");
 const { exec } = require("child_process");
@@ -24,7 +24,8 @@ app.post("/merge", (req, res) => {
       .json({ error: "Both audioUrl and videoUrl are required." });
   }
 
-  const id = uuid.v4();
+  const id = `./${uuid.v4()}`;
+  fs.mkdirSync(id);
   const tempAudioFile = `${id}/temp_audio.mp3`;
   const tempVideoFile = `${id}/temp_video.mp4`;
   const outputFilePath = `${id}/output.mp4`;
@@ -91,10 +92,6 @@ app.post("/merge", (req, res) => {
             }
             console.log(`Video with merged audio saved to: ${outputFilePath}`);
 
-            // Clean up temporary files
-            fs.unlinkSync(tempAudioFile);
-            fs.unlinkSync(tempVideoFile);
-
             // Send the merged video as a response
             res.download(outputFilePath, (err) => {
               if (err) {
@@ -102,7 +99,8 @@ app.post("/merge", (req, res) => {
               } else {
                 console.log("Video sent successfully.");
                 // Delete the output file after sending
-                fs.unlinkSync(outputFilePath);
+                fs.removeSync(id);
+                //fs.unlinkSync(outputFilePath);
               }
             });
           });
@@ -121,5 +119,5 @@ const port = process.env.prod ?? 5501;
 
 app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
-  localtunnel({ port: parseInt(port), subdomain: "instatube-generator" });
+  //localtunnel({ port: parseInt(port), subdomain: "instatube-generator" });
 });
