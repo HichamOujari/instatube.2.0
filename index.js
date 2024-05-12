@@ -1,6 +1,5 @@
 const express = require("express");
 const ytdl = require("ytdl-core");
-const fs = require("fs");
 const localtunnel = require("localtunnel");
 const { exec } = require("child_process");
 
@@ -8,8 +7,9 @@ const app = express();
 
 app.use(express.json());
 
-app.post("/merge", (req, res) => {
-  const { audioUrl, videoUrl, isShort } = req.body;
+app.post("/merge", async (req, res) => {
+  const { audioUrl, videoUrl, audioStart, videoStart, audioEnd, videoEnd } =
+    req.body;
 
   if (!audioUrl || !videoUrl) {
     return res
@@ -17,93 +17,72 @@ app.post("/merge", (req, res) => {
       .json({ error: "Both audioUrl and videoUrl are required." });
   }
 
-  const tempAudioFile = "temp_audio.mp3";
-  const tempVideoFile = "temp_video.mp4";
-  const outputFilePath = "output.mp4";
+  try {
+    // Download audio and video streams
+    const audioStream = ytdl(audioUrl, { filter: "audioonly" });
+    const videoStream = ytdl(videoUrl, { filter: "videoandaudio" });
 
-  // Download audio
-  const audioStream = ytdl(audioUrl, { filter: "audioonly" });
-  audioStream.pipe(fs.createWriteStream(tempAudioFile));
+    // Wait for both streams to finish downloading
+    const [audioInfo, videoInfo] = await Promise.all([
+      ytdl.getInfo(audioUrl),
+      ytdl.getInfo(videoUrl),
+    ]);
 
-  // Download video
-  const videoStream = ytdl(videoUrl, { filter: "videoandaudio" });
-  videoStream.pipe(fs.createWriteStream(tempVideoFile));
+    const audioDuration = parseFloat(audioInfo.videoDetails.lengthSeconds);
+    const videoDuration = parseFloat(videoInfo.videoDetails.lengthSeconds);
 
-  // Wait for both streams to finish downloading
-  Promise.all([
-    new Promise((resolve, reject) => {
-      audioStream.on("end", resolve);
-      audioStream.on("error", reject);
-    }),
-    new Promise((resolve, reject) => {
-      videoStream.on("end", resolve);
-      videoStream.on("error", reject);
-    }),
-  ])
-    .then(() => {
-      // Get durations of audio and video
-      const getDurationCommand = (file) =>
-        `ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 ${file}`;
-      exec(getDurationCommand(tempAudioFile), (error, audioDuration) => {
+    // Determine the shorter duration
+    const shortestDuration = Math.min(audioDuration, videoDuration);
+
+    // Calculate audio start and end times
+    const audioStartSecond = audioStart || 0;
+    const audioEndSecond = audioEnd
+      ? Math.min(audioEnd, audioDuration)
+      : audioDuration;
+    const audioDurationToUse = audioEndSecond - audioStartSecond;
+
+    // Calculate video start and end times
+    const videoStartSecond = videoStart || 0;
+    const videoEndSecond = videoEnd
+      ? Math.min(videoEnd, videoDuration)
+      : videoDuration;
+    const videoDurationToUse = videoEndSecond - videoStartSecond;
+
+    // Determine overall duration
+    const overallDuration = Math.min(audioDurationToUse, videoDurationToUse);
+
+    // FFmpeg command to merge audio and video
+    const ffmpegCommand = `ffmpeg -ss ${audioStartSecond} -i pipe:0 -ss ${videoStartSecond} -i pipe:1 -t ${overallDuration} -vf "scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:-1:-1,setsar=1" -c:v libx264 -b:v 1M -c:a aac -strict experimental -f mp4 pipe:2 -preset veryfast`;
+
+    // Spawn FFmpeg process
+    const ffmpegProcess = exec(
+      ffmpegCommand,
+      { stdio: ["pipe", "pipe", "pipe"] },
+      (error) => {
         if (error) {
-          console.error(`Error getting audio duration: ${error.message}`);
-          return;
+          console.error(`FFmpeg error: ${error.message}`);
+          res
+            .status(500)
+            .json({ error: "An error occurred while processing the request." });
         }
-        exec(getDurationCommand(tempVideoFile), (error, videoDuration) => {
-          if (error) {
-            console.error(`Error getting video duration: ${error.message}`);
-            return;
-          }
+      }
+    );
 
-          // Determine the shorter duration
-          const shorterDuration = Math.min(
-            parseFloat(audioDuration),
-            parseFloat(videoDuration)
-          );
+    // Pipe streams to FFmpeg
+    audioStream.pipe(ffmpegProcess.stdin);
+    videoStream.pipe(ffmpegProcess.stdin);
 
-          // Adjust duration to fit Instagram Reels limit (e.g., 60 seconds)
-          const reelsDuration = Math.min(shorterDuration, 60);
-
-          // Trim longer file to match shorter duration and adapt to Instagram Reels specs
-          const ffmpegCommand = `ffmpeg -i ${tempAudioFile} -i ${tempVideoFile} -t ${
-            isShort ? reelsDuration : shorterDuration
-          } -vf "scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:-1:-1,setsar=1" -c:v libx264 -b:v 1M -c:a aac -strict experimental ${outputFilePath} -preset veryfast`;
-
-          // Merge audio and video using ffmpeg
-          exec(ffmpegCommand, (error, stdout, stderr) => {
-            if (error) {
-              console.error(`Error: ${error.message}`);
-              return;
-            }
-            console.log(`Video with merged audio saved to: ${outputFilePath}`);
-
-            // Clean up temporary files
-            fs.unlinkSync(tempAudioFile);
-            fs.unlinkSync(tempVideoFile);
-
-            // Send the merged video as a response
-            res.download(outputFilePath, (err) => {
-              if (err) {
-                console.error(`Error sending video: ${err.message}`);
-              } else {
-                console.log("Video sent successfully.");
-                // Delete the output file after sending
-                fs.unlinkSync(outputFilePath);
-              }
-            });
-          });
-        });
-      });
-    })
-    .catch((error) => {
-      console.error("Error downloading streams:", error);
-      res
-        .status(500)
-        .json({ error: "An error occurred while processing the request." });
-    });
+    // Pipe FFmpeg output to response
+    ffmpegProcess.stdout.pipe(res);
+  } catch (error) {
+    console.error("Error downloading streams:", error);
+    res
+      .status(500)
+      .json({ error: "An error occurred while processing the request." });
+  }
 });
 
-const port = process.env.prod ?? 5501;
+const port = process.env.PORT || 5501;
 
 app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
