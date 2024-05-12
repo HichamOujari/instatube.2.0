@@ -107,5 +107,5 @@ const port = process.env.prod ?? 5501;
 
 app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
-  //localtunnel({ port: parseInt(port), subdomain: "instatube-generator" });
+  localtunnel({ port: parseInt(port), subdomain: "instatube-generator" });
 });
