@@ -5,13 +5,14 @@
   "main": "index.js",
   "scripts": {
     "git": "git add . && git commit -m \"message\" && git push",
-    "pull":"git pull && forever restart index.js",
+    "pull": "git pull && forever restart index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.6.8",
     "express": "^4.19.2",
     "ffmpeg-static": "^5.2.0",
     "fluent-ffmpeg": "^2.1.2",
