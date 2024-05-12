@@ -101,7 +101,7 @@ app.post("/merge", (req, res) => {
     });
 });
 
-const port = process.env.prod ?? 3000;
+const port = process.env.prod ?? 5501;
 
 app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
