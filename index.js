@@ -9,7 +9,13 @@ const app = express();
 app.use(express.json());
 
 app.post("/merge", (req, res) => {
-  const { audioUrl, videoUrl, isShort } = req.body;
+  let {
+    audio: { url: audioUrl, from: audiostart, to: audioend },
+    video: { url: videoUrl, from: videostart, to: videoend },
+  } = req.body;
+
+  if (!audiostart) audiostart = 0;
+  if (!videostart) videostart = 0;
 
   if (!audioUrl || !videoUrl) {
     return res
@@ -55,19 +61,25 @@ app.post("/merge", (req, res) => {
             return;
           }
 
+          audioDuration = parseFloat(audioDuration);
+          videoDuration = parseFloat(videoDuration);
+
+          if (!audioend || (audioend && audioend > audioDuration))
+            audioend = audioDuration;
+          if (!videoend || (videoend && videoend > videoDuration))
+            videoend = videoDuration;
+
+          if (audiostart > audioend || videostart > videoend)
+            res.status(400).json({ error: "start should be small then end" });
+
           // Determine the shorter duration
           const shorterDuration = Math.min(
-            parseFloat(audioDuration),
-            parseFloat(videoDuration)
+            audioend - audiostart,
+            videoend - videostart
           );
 
-          // Adjust duration to fit Instagram Reels limit (e.g., 60 seconds)
-          const reelsDuration = Math.min(shorterDuration, 60);
-
           // Trim longer file to match shorter duration and adapt to Instagram Reels specs
-          const ffmpegCommand = `ffmpeg -i ${tempAudioFile} -i ${tempVideoFile} -t ${
-            isShort ? reelsDuration : shorterDuration
-          } -vf "scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:-1:-1,setsar=1" -c:v libx264 -b:v 1M -c:a aac -strict experimental ${outputFilePath} -preset veryfast`;
+          const ffmpegCommand = `ffmpeg -i ${tempAudioFile} -i ${tempVideoFile} -t ${shorterDuration} -vf "scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:-1:-1,setsar=1" -c:v libx264 -b:v 1M -c:a aac -strict experimental ${outputFilePath} -preset veryfast`;
 
           // Merge audio and video using ffmpeg
           exec(ffmpegCommand, (error, stdout, stderr) => {
@@ -107,5 +119,5 @@ const port = process.env.prod ?? 5501;
 
 app.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
-  localtunnel({ port: parseInt(port), subdomain: "instatube-generator" });
+  //localtunnel({ port: parseInt(port), subdomain: "instatube-generator" });
 });
