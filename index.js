@@ -88,7 +88,7 @@ app.post("/merge", (req, res) => {
           );
 
           // Trim longer file to match shorter duration and adapt to Instagram Reels specs
-          const ffmpegCommand = `ffmpeg -i ${tempAudioFile} -i ${tempVideoFile} -t ${shorterDuration} -vf "scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:-1:-1,setsar=1" -c:v libx264 -b:v 500k -c:a aac -b:a 96k -preset medium ${outputFilePath}`;
+          const ffmpegCommand = `ffmpeg -ss ${audiostart} -i ${tempAudioFile} -ss ${videostart}  -i ${tempVideoFile}  -t ${shorterDuration} -map 0:v -map 1:a -c:v copy -c:a copy -preset veryfast -shortest ${outputFilePath}`;
 
           // Merge audio and video using ffmpeg
           exec(ffmpegCommand, (error, stdout, stderr) => {
