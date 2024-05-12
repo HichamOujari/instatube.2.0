@@ -15,6 +15,11 @@ app.post("/merge", (req, res) => {
     video: { url: videoUrl, from: videostart, to: videoend },
   } = req.body;
 
+  console.log("=> urls : ", {
+    audioUrl,
+    videoUrl,
+  });
+
   if (!audiostart) audiostart = 0;
   if (!videostart) videostart = 0;
 
