@@ -88,7 +88,11 @@ app.post("/merge", (req, res) => {
           );
 
           // Trim longer file to match shorter duration and adapt to Instagram Reels specs
-          const ffmpegCommand = `ffmpeg -ss ${audiostart} -i ${tempAudioFile} -ss ${videostart} -i ${tempVideoFile} -t ${shorterDuration} -vf "scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:-1:-1,setsar=1" -c:v libx264 -b:v 250k -c:a aac -strict experimental -preset veryfast ${outputFilePath} `;
+          const ffmpegCommand = `ffmpeg -ss ${convertSecondsToHMS(
+            audiostart
+          )} -i ${tempAudioFile} -ss ${convertSecondsToHMS(
+            videostart
+          )} -i ${tempVideoFile} -t ${shorterDuration} -vf "scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:-1:-1,setsar=1" -c:v libx264 -b:v 250k -c:a aac -strict experimental -preset veryfast ${outputFilePath} `;
 
           // Merge audio and video using ffmpeg
           exec(ffmpegCommand, (error, stdout, stderr) => {
@@ -120,6 +124,20 @@ app.post("/merge", (req, res) => {
         .json({ error: "An error occurred while processing the request." });
     });
 });
+
+function convertSecondsToHMS(seconds) {
+  var hours = Math.floor(seconds / 3600);
+  var minutes = Math.floor((seconds % 3600) / 60);
+  var remainingSeconds = seconds % 60;
+
+  // Add leading zeros if necessary
+  hours = hours < 10 ? "0" + hours : hours;
+  minutes = minutes < 10 ? "0" + minutes : minutes;
+  remainingSeconds =
+    remainingSeconds < 10 ? "0" + remainingSeconds : remainingSeconds;
+
+  return hours + ":" + minutes + ":" + remainingSeconds;
+}
 
 const port = process.env.prod ?? 5501;
 
