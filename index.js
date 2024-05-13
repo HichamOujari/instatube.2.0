@@ -88,12 +88,10 @@ app.post("/merge", (req, res) => {
             videoend - videostart
           );
 
-          if (shorterDuration > 60 * 3)
-            return res
-              .status(400)
-              .json({
-                error: "The generated video must be no longer than 3 minutes.",
-              });
+          if (shorterDuration >= 60 * 3)
+            return res.status(400).json({
+              error: "The generated video must be no longer than 3 minutes.",
+            });
 
           // Trim longer file to match shorter duration and adapt to Instagram Reels specs
           const ffmpegCommand = `ffmpeg -ss ${convertSecondsToHMS(
