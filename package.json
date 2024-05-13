@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "git": "git add . && git commit -m \"message\" && git push",
-    "pull": "git pull && forever restart index.js",
+    "pull": "forever stop && index.jsgit pull && forever start index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
