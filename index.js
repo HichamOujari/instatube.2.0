@@ -78,14 +78,22 @@ app.post("/merge", (req, res) => {
             videoend = videoDuration;
 
           if (audiostart > audioend || videostart > videoend)
-            res.status(400).json({ error: "start should be small then end" });
+            return res
+              .status(400)
+              .json({ error: "start should be small then end" });
 
           // Determine the shorter duration
           const shorterDuration = Math.min(
             audioend - audiostart,
-            videoend - videostart,
-            60 * 10
+            videoend - videostart
           );
+
+          if (shorterDuration > 60 * 3)
+            return res
+              .status(400)
+              .json({
+                error: "The generated video must be no longer than 3 minutes.",
+              });
 
           // Trim longer file to match shorter duration and adapt to Instagram Reels specs
           const ffmpegCommand = `ffmpeg -ss ${convertSecondsToHMS(
