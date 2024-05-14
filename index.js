@@ -98,7 +98,7 @@ app.post("/merge", (req, res) => {
             audiostart
           )} -i ${tempAudioFile} -ss ${convertSecondsToHMS(
             videostart
-          )} -i ${tempVideoFile} -t ${shorterDuration} -vf "scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:-1:-1,setsar=1" -c:v libx264 -b:v 250k -c:a aac -strict experimental -preset veryfast ${outputFilePath} `;
+          )} -i ${tempVideoFile} -t ${shorterDuration} -vf "scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:-1:-1,setsar=1" -c:v libx264 -b:v 450k -c:a aac -strict experimental -preset veryfast ${outputFilePath} `;
 
           // Merge audio and video using ffmpeg
           exec(ffmpegCommand, (error, stdout, stderr) => {
