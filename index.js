@@ -88,17 +88,19 @@ app.post("/merge", (req, res) => {
             videoend - videostart
           );
 
-          if (shorterDuration >= 60 * 3)
+          if (shorterDuration >= 600 * 3){
+            fs.removeSync(id);
             return res.status(400).json({
               error: "The generated video must be no longer than 3 minutes.",
             });
+          }
 
           // Trim longer file to match shorter duration and adapt to Instagram Reels specs
           const ffmpegCommand = `ffmpeg -ss ${convertSecondsToHMS(
             audiostart
           )} -i ${tempAudioFile} -ss ${convertSecondsToHMS(
             videostart
-          )} -i ${tempVideoFile} -t ${shorterDuration} -vf "scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:-1:-1,setsar=1" -c:v libx264 -b:v 450k -c:a aac -strict experimental -preset veryfast ${outputFilePath} `;
+          )} -i ${tempVideoFile} -t ${shorterDuration} -vf "scale=720:1280:force_original_aspect_ratio=decrease,pad=720:1280:-1:-1,setsar=1" -c:v libx264 -b:v 1M -c:a aac -strict experimental -preset veryfast ${outputFilePath} `;
 
           // Merge audio and video using ffmpeg
           exec(ffmpegCommand, (error, stdout, stderr) => {
