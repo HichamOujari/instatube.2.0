@@ -4,7 +4,7 @@ InstaTube Generator is a Node.js application designed to simplify the process of
 
 ## Usage
 
-To use InstaTube Generator, make an API call to the following endpoint: https://instatube-generator.loca.lt/merge
+To use InstaTube Generator, make an API call to the following endpoint: [https://instatube-generator.loca.lt](https://montreal-apparent-arrived-chan.trycloudflare.com/)/merge
 
 
 The payload should include the URLs of the audio and video to merge, structured as follows:
