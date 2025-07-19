@@ -124,8 +124,16 @@ app.post("/merge", (req, res) => {
             // Instead of sending the file, return a download link
             const uuidOnly = id.replace("./", "");
             res.json({
-              downloadUrl: `/download/${uuidOnly}`,
+              url: `/download/${uuidOnly}`,
+              message: "This download link will expire in 2 hours.",
             });
+            // Delete only the audio and video files, keep the output file
+            try {
+              if (fs.existsSync(tempAudioFile)) fs.removeSync(tempAudioFile);
+              if (fs.existsSync(tempVideoFile)) fs.removeSync(tempVideoFile);
+            } catch (e) {
+              console.error("Error deleting temp files:", e);
+            }
           });
         });
       });
