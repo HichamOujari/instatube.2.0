@@ -1,4 +1,10 @@
-FROM node:18-alpine
+FROM node:slim
+
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD true
+
+RUN apt-get update && apt-get install gnupg lame ffmpeg wget -y && \
+    apt-get update && \
+    rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
