@@ -122,7 +122,6 @@ GET /download/2b1e3c7e-7c2a-4e2b-9b1a-8e2c3d4f5a6b
     ```
     { "error": "File is expired" }
     ```
-
 ---
 
 ## Notes
