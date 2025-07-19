@@ -4,9 +4,12 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node main.js",
     "git": "git add . && git commit -m \"message\" && git push",
     "pull": "forever stop index.js && git pull && forever start index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "docker:build": "docker build -t hichamouja99/tubemerger .",
+    "docker:push": "docker push hichamouja99/tubemerger",
+    "docker:run": "docker run -p 3000:3000 hichamouja99/tubemerger"
   },
   "keywords": [],
   "author": "",
